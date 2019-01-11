@@ -97,8 +97,6 @@ contract COO is ERC721Full, Ownable {
     ) public view returns (
         Certificate
     ) {
-        require(ownerOf(certificateId) == msg.sender, "Certificates can only be read by their owners");
-
         return certificates[certificateId];
     }
 
@@ -112,8 +110,6 @@ contract COO is ERC721Full, Ownable {
     ) public view returns (
         string[]
     ) {
-        require(ownerOf(certificateId) == msg.sender, "Certificates can only be updated by their owners");
-
         return certificatesData[certificateId];
     }
 
