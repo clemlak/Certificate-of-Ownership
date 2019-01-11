@@ -118,7 +118,7 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            orders[orderId].expiresAt < now,
+            orders[orderId].expiresAt > now,
             "Order has expired"
         );
 
@@ -128,7 +128,7 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            tokenContract.allowance(msg.sender, address(this)) > orders[orderId].price,
+            tokenContract.allowance(msg.sender, address(this)) >= orders[orderId].price,
             "Contract is not allowed to manipulate buyer funds"
         );
 
