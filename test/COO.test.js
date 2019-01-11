@@ -1,6 +1,10 @@
 /* eslint-env node, mocha */
 /* global artifacts, contract, it, assert */
 
+/**
+ * TODO: Update these tests
+ */
+
 const COO = artifacts.require('COO');
 
 let instance;
