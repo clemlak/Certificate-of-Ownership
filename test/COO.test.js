@@ -1,5 +1,5 @@
-/* eslint-env node, mocha */
-/* global artifacts, contract, it, assert */
+/* eslint-env mocha */
+/* global artifacts, contract, assert */
 
 /**
  * TODO: Update these tests
