@@ -5,6 +5,6 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract DummyToken is ERC20 {
     constructor() public {
-        _mint(msg.sender, 1000000 * 10 ** 18);
+        _mint(msg.sender, 21000000 * 10 ** 18);
     }
 }
