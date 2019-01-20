@@ -7,6 +7,9 @@ import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
+/**
+ * @title Marketplace contract
+ */
 contract Marketplace is Ownable, Pausable {
     address public tokenContractAddress;
     address public cooContractAddress;
@@ -18,7 +21,7 @@ contract Marketplace is Ownable, Pausable {
 
     enum Status { Open, Completed, Canceled }
 
-    struct Order {
+    struct Sale {
         Status status;
         address seller;
         address buyer;
@@ -27,23 +30,59 @@ contract Marketplace is Ownable, Pausable {
         uint256 expiresAt;
     }
 
-    Order[] public orders;
+    Sale[] public sales;
 
-    mapping (address => uint256[]) public ordersToSellers;
-    mapping (address => uint256[]) public ordersToBuyers;
+    mapping (address => uint256[]) public salesToSellers;
+    mapping (address => uint256[]) public salesToBuyers;
 
-    event LogOrderCreated(
-        uint256 orderId,
+    event SaleCreated(
+        uint256 saleId,
         address indexed seller
     );
 
-    event LogOrderCompleted(
-        uint256 orderId,
+    event SaleCompleted(
+        uint256 saleId,
         address indexed buyer
     );
 
-    event LogOrderCanceled(
-        uint256 orderId
+    event SaleCanceled(
+        uint256 saleId
+    );
+
+    struct Auction {
+        Status status;
+        address seller;
+        address buyer;
+        uint256 startingPrice;
+        uint256 currentBid;
+        uint256 certificateId;
+        uint256 expiresAt;
+    }
+
+    Auction[] public auctions;
+
+    mapping (address => uint256[]) public auctionsToSellers;
+    mapping (address => uint256[]) public auctionsToBuyers;
+
+    event AuctionCreated(
+        uint256 auctionId,
+        address indexed seller
+    );
+
+    event NewBid(
+        uint256 auctionId,
+        address bidder,
+        uint256 currentBid
+    );
+
+    event AuctionCompleted(
+        uint256 auctionId,
+        address indexed buyer,
+        uint256 price
+    );
+
+    event AuctionCanceled(
+        uint256 auctionId
     );
 
     function setTokenContractAddress(address newTokenContractAddress) external onlyOwner() whenPaused() {
@@ -58,7 +97,7 @@ contract Marketplace is Ownable, Pausable {
         cooContractAddress = newCooContractAddress;
     }
 
-    function createOrder(uint256 certificateId, uint256 price, uint256 expiresAt) external whenNotPaused() {
+    function createSale(uint256 certificateId, uint256 price, uint256 expiresAt) external whenNotPaused() {
         IERC721 cooContract = IERC721(cooContractAddress);
 
         require(
@@ -71,8 +110,8 @@ contract Marketplace is Ownable, Pausable {
             "Contract is not allowed to manipulate certificate"
         );
 
-        uint256 orderId = orders.push(
-            Order({
+        uint256 saleId = sales.push(
+            Sale({
                 status: Status.Open,
                 seller: msg.sender,
                 buyer: address(0),
@@ -82,67 +121,191 @@ contract Marketplace is Ownable, Pausable {
             })
         ) - 1;
 
-        ordersToSellers[msg.sender].push(orderId);
+        salesToSellers[msg.sender].push(saleId);
 
-        emit LogOrderCreated(orderId, msg.sender);
+        emit SaleCreated(saleId, msg.sender);
     }
 
-    function cancelOrder(uint256 orderId) external whenNotPaused() {
+    function cancelSale(uint256 saleId) external whenNotPaused() {
         require(
-            orders[orderId].seller == msg.sender,
-            "You cannot cancel this order"
+            sales[saleId].seller == msg.sender,
+            "You cannot cancel this sale"
         );
 
         require(
-            orders[orderId].status == Status.Open,
-            "Order is not open anymore"
+            sales[saleId].status == Status.Open,
+            "Sale is not open anymore"
         );
 
-        orders[orderId].status = Status.Canceled;
+        sales[saleId].status = Status.Canceled;
 
-        emit LogOrderCanceled(orderId);
+        emit SaleCanceled(saleId);
     }
 
-    function executeOrder(uint256 orderId) external whenNotPaused() {
+    function executeSale(uint256 saleId) external whenNotPaused() {
         IERC20 tokenContract = IERC20(tokenContractAddress);
         IERC721 cooContract = IERC721(cooContractAddress);
 
         require(
-            orders[orderId].seller != msg.sender,
-            "You cannot execute your own order"
+            sales[saleId].seller != msg.sender,
+            "You cannot execute your own sale"
         );
 
         require(
-            orders[orderId].status == Status.Open,
-            "Order is not open anymore"
+            sales[saleId].status == Status.Open,
+            "Sale is not open anymore"
         );
 
         require(
-            orders[orderId].expiresAt > now,
-            "Order has expired"
+            sales[saleId].expiresAt > now,
+            "Sale has expired"
         );
 
         require(
-            cooContract.getApproved(orders[orderId].certificateId) == address(this),
+            cooContract.getApproved(sales[saleId].certificateId) == address(this),
             "Contract is not allowed to manipulate certificate"
         );
 
         require(
-            tokenContract.allowance(msg.sender, address(this)) >= orders[orderId].price,
+            tokenContract.allowance(msg.sender, address(this)) >= sales[saleId].price,
             "Contract is not allowed to manipulate buyer funds"
         );
 
         require(
-            tokenContract.transferFrom(msg.sender, orders[orderId].seller, orders[orderId].price),
+            tokenContract.transferFrom(msg.sender, sales[saleId].seller, sales[saleId].price),
             "Contract could not transfer the funds"
         );
 
-        cooContract.transferFrom(orders[orderId].seller, msg.sender, orders[orderId].certificateId);
+        cooContract.transferFrom(sales[saleId].seller, msg.sender, sales[saleId].certificateId);
 
-        orders[orderId].buyer = msg.sender;
-        orders[orderId].status = Status.Completed;
+        sales[saleId].buyer = msg.sender;
+        sales[saleId].status = Status.Completed;
 
-        emit LogOrderCompleted(orderId, msg.sender);
+        emit SaleCompleted(saleId, msg.sender);
     }
 
+    function createAuction(uint256 certificateId, uint256 startingPrice, uint256 expiresAt) external whenNotPaused() {
+        IERC721 cooContract = IERC721(cooContractAddress);
+
+        require(
+            cooContract.ownerOf(certificateId) == msg.sender,
+            "Sender is not the owner of the certificate"
+        );
+
+        require(
+            cooContract.getApproved(certificateId) == address(this),
+            "Contract is not allowed to manipulate certificate"
+        );
+
+        uint256 auctionId = auctions.push(
+            Auction({
+                status: Status.Open,
+                seller: msg.sender,
+                buyer: address(0),
+                startingPrice: startingPrice,
+                currentBid: 0,
+                certificateId: certificateId,
+                expiresAt: expiresAt
+            })
+        ) - 1;
+
+        auctionsToSellers[msg.sender].push(auctionId);
+
+        emit AuctionCreated(auctionId, msg.sender);
+    }
+
+    function cancelAuction(uint256 auctionId) external whenNotPaused() {
+        require(
+            auctions[auctionId].seller == msg.sender,
+            "You cannot cancel this auction"
+        );
+
+        require(
+            auctions[auctionId].status == Status.Open,
+            "Auction is not open anymore"
+        );
+
+        auctions[auctionId].status = Status.Canceled;
+
+        emit AuctionCanceled(auctionId);
+    }
+
+    function executeAuction(uint256 auctionId, uint256 amount) external whenNotPaused() {
+        IERC20 tokenContract = IERC20(tokenContractAddress);
+        IERC721 cooContract = IERC721(cooContractAddress);
+
+        require(
+            auctions[auctionId].seller != msg.sender,
+            "You cannot bid on your own auction"
+        );
+
+        require(
+            auctions[auctionId].status == Status.Open,
+            "Auction is not open anymore"
+        );
+
+        require(
+            auctions[auctionId].expiresAt > now,
+            "Auction has expired"
+        );
+
+        require(
+            amount >= auctions[auctionId].startingPrice && amount > auctions[auctionId].currentBid,
+            "Amount must be higher"
+        );
+
+        require(
+            cooContract.getApproved(auctions[auctionId].certificateId) == address(this),
+            "Contract is not allowed to manipulate certificate"
+        );
+
+        require(
+            tokenContract.allowance(msg.sender, address(this)) >= amount,
+            "Contract is not allowed to manipulate buyer funds"
+        );
+
+        auctions[auctionId].currentBid = amount;
+        auctions[auctionId].buyer = msg.sender;
+
+        emit NewBid(auctionId, msg.sender, amount);
+    }
+
+    function completeAuction(uint256 auctionId) external whenNotPaused() {
+        IERC20 tokenContract = IERC20(tokenContractAddress);
+        IERC721 cooContract = IERC721(cooContractAddress);
+
+        require(
+            auctions[auctionId].status == Status.Open,
+            "Auction is not open anymore"
+        );
+
+/*
+        require(
+            auctions[auctionId].expiresAt < now,
+            "Auction has not expired yet"
+        );
+        */
+
+        require(
+            cooContract.getApproved(auctions[auctionId].certificateId) == address(this),
+            "Contract is not allowed to manipulate certificate"
+        );
+
+        require(
+            tokenContract.allowance(msg.sender, address(this)) >= auctions[auctionId].currentBid,
+            "Contract is not allowed to manipulate buyer funds"
+        );
+
+        require(
+            tokenContract.transferFrom(msg.sender, auctions[auctionId].seller, auctions[auctionId].currentBid),
+            "Contract could not transfer the funds"
+        );
+
+        cooContract.transferFrom(auctions[auctionId].seller, msg.sender, auctions[auctionId].certificateId);
+
+        auctions[auctionId].buyer = msg.sender;
+        auctions[auctionId].status = Status.Completed;
+
+        emit AuctionCompleted(auctionId, msg.sender, auctions[auctionId].currentBid);
+    }
 }

@@ -54,6 +54,14 @@ contract('Marketplace', (accounts) => {
     from: accounts[0],
   }));
 
+  it('Should transfer some tokens to account 3', () => dummyTokenInstance.transfer(accounts[3], 10, {
+    from: accounts[0],
+  }));
+
+  it('Should transfer some tokens to account 4', () => dummyTokenInstance.transfer(accounts[4], 20, {
+    from: accounts[0],
+  }));
+
   it('Should check the address of the COO in the Marketplace contract', () => marketplaceInstance.cooContractAddress()
     .then((cooContractAddress) => {
       assert.equal(cooInstance.address, cooContractAddress, 'Coo contract address is wrong');
@@ -67,7 +75,7 @@ contract('Marketplace', (accounts) => {
     from: accounts[1],
   }));
 
-  it('Should create a new order for certificate 0', () => marketplaceInstance.createOrder(
+  it('Should create a new order for certificate 0', () => marketplaceInstance.createSale(
     0,
     10,
     getFutureDate(2), {
@@ -79,7 +87,53 @@ contract('Marketplace', (accounts) => {
     from: accounts[2],
   }));
 
-  it('Should execute order 0', () => marketplaceInstance.executeOrder(0, {
+  it('Should execute order 0', () => marketplaceInstance.executeSale(0, {
     from: accounts[2],
   }));
+
+  it('Should check the owner of certificate 0', () => cooInstance.ownerOf(0)
+    .then((owner) => {
+      assert.equal(owner, accounts[2], 'Owner is wrong');
+    }));
+
+  it('Should create another new certificate from account 1', () => cooInstance.createCertificate(testCertificate, {
+    from: accounts[1],
+  }));
+
+  it('Should allow the marketplace contract to manipulate certificate 1', () => cooInstance.approve(marketplaceInstance.address, 1, {
+    from: accounts[1],
+  }));
+
+  it('Should create a new auction for certificate 1', () => marketplaceInstance.createAuction(
+    1,
+    10,
+    getFutureDate(1), {
+      from: accounts[1],
+    },
+  ));
+
+  it('Should allow marketplace contract to manipulate account 3 funds', () => dummyTokenInstance.approve(marketplaceInstance.address, 10, {
+    from: accounts[3],
+  }));
+
+  it('Should allow marketplace contract to manipulate account 4 funds', () => dummyTokenInstance.approve(marketplaceInstance.address, 20, {
+    from: accounts[4],
+  }));
+
+  it('Should execute auction 0', () => marketplaceInstance.executeAuction(0, 10, {
+    from: accounts[3],
+  }));
+
+  it('Should execute auction 0', () => marketplaceInstance.executeAuction(0, 20, {
+    from: accounts[4],
+  }));
+
+  it('Should complete the auction 0', () => marketplaceInstance.completeAuction(0, {
+    from: accounts[4],
+  }));
+
+  it('Should check the owner of certificate 1', () => cooInstance.ownerOf(1)
+    .then((owner) => {
+      assert.equal(owner, accounts[4], 'Owner is wrong');
+    }));
 });
