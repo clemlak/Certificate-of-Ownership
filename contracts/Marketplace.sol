@@ -52,7 +52,7 @@ contract Marketplace is Ownable, Pausable {
     /**
      * @dev Emitted when a sale has been completed
      * @param saleId The id of the sale
-     * @param seller The address of the buyer
+     * @param buyer The address of the buyer
      */
     event SaleCompleted(
         uint256 saleId,
@@ -98,7 +98,8 @@ contract Marketplace is Ownable, Pausable {
     /**
      * @dev Emitted when a new bid has been made
      * @param auctionId The id of the auction
-     * @param currentBid The address of the bidder
+     * @param bidder The address of the bidder
+     * @param currentBid The amount of the bid
      */
     event NewBid(
         uint256 auctionId,
@@ -109,7 +110,8 @@ contract Marketplace is Ownable, Pausable {
     /**
      * @dev Emitted when an auction has been completed
      * @param auctionId The id of the auction
-     * @param currentBid The address of the bidder
+     * @param buyer The address of the buyer
+     * @param price The final price of the auction
      */
     event AuctionCompleted(
         uint256 auctionId,
@@ -149,7 +151,7 @@ contract Marketplace is Ownable, Pausable {
      * @dev Creates a new sale
      * @param certificateId The id of the certificate
      * @param price The expected price
-     * @param The expiry date of the sale (as a timestamp)
+     * @param expiresAt The expiry date of the sale (as a timestamp)
      */
     function createSale(uint256 certificateId, uint256 price, uint256 expiresAt) external whenNotPaused() {
         IERC721 cooContract = IERC721(cooContractAddress);
