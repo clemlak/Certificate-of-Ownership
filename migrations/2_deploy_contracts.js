@@ -8,7 +8,7 @@ const Marketplace = artifacts.require('Marketplace');
 function deployContracts(deployer, network) {
   console.log('Deploying to network:', network);
 
-  if (network === 'development') {
+  if (network === 'development' || network === 'ropsten') {
     let cooContractAddress;
     let tokenContractAddress;
 
