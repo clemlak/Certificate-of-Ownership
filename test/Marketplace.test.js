@@ -128,6 +128,24 @@ contract('Marketplace', (accounts) => {
     from: accounts[4],
   }));
 
+  it('Should time travel 3 hours', () => {
+    const jsonrpc = '2.0';
+    const id = 0;
+    const method = 'evm_increaseTime';
+
+    return new Promise((resolve, reject) => {
+      web3.currentProvider.send({
+        jsonrpc,
+        method,
+        params: [3 * 60 * 60],
+        id,
+      }, (err, result) => {
+        if (err) { return reject(err); }
+        return resolve(result);
+      });
+    });
+  });
+
   it('Should complete the auction 0', () => marketplaceInstance.completeAuction(0, {
     from: accounts[4],
   }));
