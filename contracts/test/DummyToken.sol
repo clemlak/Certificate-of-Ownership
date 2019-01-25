@@ -7,4 +7,8 @@ contract DummyToken is ERC20 {
     constructor() public {
         _mint(msg.sender, 21000000 * 10 ** 18);
     }
+
+    function claimFreeTokens(uint256 amount) external {
+        _mint(msg.sender, amount);
+    }
 }
