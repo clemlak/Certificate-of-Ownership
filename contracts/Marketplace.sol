@@ -9,6 +9,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
  * @title Marketplace contract
+ * @dev This contract handles how certificates can be traded
  */
 contract Marketplace is Ownable, Pausable {
     address public tokenContractAddress;
@@ -21,13 +22,16 @@ contract Marketplace is Ownable, Pausable {
 
     enum Status { Open, Completed, Canceled }
 
+    /**
+     * Sales are instantaneous orders
+     */
     struct Sale {
-        Status status;
-        address seller;
-        address buyer;
         uint256 price;
         uint256 certificateId;
         uint256 expiresAt;
+        Status status;
+        address seller;
+        address buyer;
     }
 
     Sale[] public sales;
@@ -35,20 +39,37 @@ contract Marketplace is Ownable, Pausable {
     mapping (address => uint256[]) public salesToSellers;
     mapping (address => uint256[]) public salesToBuyers;
 
+    /**
+     * @dev Emitted when a new sale has been created
+     * @param saleId The id of the sale
+     * @param seller The address of the seller
+     */
     event SaleCreated(
         uint256 saleId,
         address indexed seller
     );
 
+    /**
+     * @dev Emitted when a sale has been completed
+     * @param saleId The id of the sale
+     * @param seller The address of the buyer
+     */
     event SaleCompleted(
         uint256 saleId,
         address indexed buyer
     );
 
+    /**
+     * @dev Emitted when a sale has been canceled
+     * @param saleId The id of the sale
+     */
     event SaleCanceled(
         uint256 saleId
     );
 
+    /**
+     * Orders can be auctions too
+     */
     struct Auction {
         Status status;
         address seller;
@@ -64,39 +85,72 @@ contract Marketplace is Ownable, Pausable {
     mapping (address => uint256[]) public auctionsToSellers;
     mapping (address => uint256[]) public auctionsToBuyers;
 
+    /**
+     * @dev Emitted when a new auction has been created
+     * @param auctionId The id of the auction
+     * @param seller The address of the seller
+     */
     event AuctionCreated(
         uint256 auctionId,
         address indexed seller
     );
 
+    /**
+     * @dev Emitted when a new bid has been made
+     * @param auctionId The id of the auction
+     * @param currentBid The address of the bidder
+     */
     event NewBid(
         uint256 auctionId,
         address bidder,
         uint256 currentBid
     );
 
+    /**
+     * @dev Emitted when an auction has been completed
+     * @param auctionId The id of the auction
+     * @param currentBid The address of the bidder
+     */
     event AuctionCompleted(
         uint256 auctionId,
         address indexed buyer,
         uint256 price
     );
 
+    /**
+     * @dev Emitted when an auction has been canceled
+     * @param auctionId The id of the auction
+     */
     event AuctionCanceled(
         uint256 auctionId
     );
 
+    /**
+     * @dev Updates the address of the token contract
+     * @param newTokenContractAddress The new address of the token contract
+     */
     function setTokenContractAddress(address newTokenContractAddress) external onlyOwner() whenPaused() {
         require(newTokenContractAddress != address(0), "New token contract address is invalid");
 
         tokenContractAddress = newTokenContractAddress;
     }
 
+    /**
+     * @dev Updates the address of the COO contract
+     * @param newCooContractAddress The new address of the COO contract
+     */
     function setCooContractAddress(address newCooContractAddress) external onlyOwner() whenPaused() {
         require(newCooContractAddress != address(0), "New token contract address is invalid");
 
         cooContractAddress = newCooContractAddress;
     }
 
+    /**
+     * @dev Creates a new sale
+     * @param certificateId The id of the certificate
+     * @param price The expected price
+     * @param The expiry date of the sale (as a timestamp)
+     */
     function createSale(uint256 certificateId, uint256 price, uint256 expiresAt) external whenNotPaused() {
         IERC721 cooContract = IERC721(cooContractAddress);
 
@@ -126,6 +180,10 @@ contract Marketplace is Ownable, Pausable {
         emit SaleCreated(saleId, msg.sender);
     }
 
+    /**
+     * @dev Cancels a sale
+     * @param saleId The id of the sale
+     */
     function cancelSale(uint256 saleId) external whenNotPaused() {
         require(
             sales[saleId].seller == msg.sender,
@@ -142,6 +200,10 @@ contract Marketplace is Ownable, Pausable {
         emit SaleCanceled(saleId);
     }
 
+    /**
+     * @dev Executes a sale
+     * @param saleId The id of the sale
+     */
     function executeSale(uint256 saleId) external whenNotPaused() {
         IERC20 tokenContract = IERC20(tokenContractAddress);
         IERC721 cooContract = IERC721(cooContractAddress);
@@ -184,6 +246,12 @@ contract Marketplace is Ownable, Pausable {
         emit SaleCompleted(saleId, msg.sender);
     }
 
+    /**
+     * @dev Creates an auction
+     * @param certificateId The id of the certificate
+     * @param startingPrice The starting price of the auction
+     * @param expiresAt The expiry date of the auction
+     */
     function createAuction(uint256 certificateId, uint256 startingPrice, uint256 expiresAt) external whenNotPaused() {
         IERC721 cooContract = IERC721(cooContractAddress);
 
@@ -214,6 +282,10 @@ contract Marketplace is Ownable, Pausable {
         emit AuctionCreated(auctionId, msg.sender);
     }
 
+    /**
+     * @dev Cancels an auction
+     * @param auctionId The id of the auction
+     */
     function cancelAuction(uint256 auctionId) external whenNotPaused() {
         require(
             auctions[auctionId].seller == msg.sender,
@@ -230,6 +302,11 @@ contract Marketplace is Ownable, Pausable {
         emit AuctionCanceled(auctionId);
     }
 
+    /**
+     * @dev Executes an auction (Makes a new bid)
+     * @param auctionId The id of the auction
+     * @param amount The amount to bid
+     */
     function executeAuction(uint256 auctionId, uint256 amount) external whenNotPaused() {
         IERC20 tokenContract = IERC20(tokenContractAddress);
         IERC721 cooContract = IERC721(cooContractAddress);
@@ -270,6 +347,10 @@ contract Marketplace is Ownable, Pausable {
         emit NewBid(auctionId, msg.sender, amount);
     }
 
+    /**
+     * @dev Completes an auction (to claim the certificate)
+     * @param auctionId The id of the auction
+     */
     function completeAuction(uint256 auctionId) external whenNotPaused() {
         IERC20 tokenContract = IERC20(tokenContractAddress);
         IERC721 cooContract = IERC721(cooContractAddress);
@@ -279,12 +360,10 @@ contract Marketplace is Ownable, Pausable {
             "Auction is not open anymore"
         );
 
-/*
         require(
             auctions[auctionId].expiresAt < now,
             "Auction has not expired yet"
         );
-        */
 
         require(
             cooContract.getApproved(auctions[auctionId].certificateId) == address(this),

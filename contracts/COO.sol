@@ -7,8 +7,8 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 /**
  * @title Certificate of Ownership
+ * @dev This is our main contract
  */
-/* TODO: Update this contract to Solidity 0.5.0 */
 contract COO is ERC721Full, Ownable {
     constructor() public ERC721Full(
         "Certificate Of Ownership",
@@ -16,9 +16,6 @@ contract COO is ERC721Full, Ownable {
     ) {
     }
 
-    /**
-     * Our certificates are defined with the following structure
-     */
     struct Certificate {
         uint256 assetId;
         string name;
@@ -29,14 +26,8 @@ contract COO is ERC721Full, Ownable {
         string anotherEncryptionKey;
     }
 
-    /**
-     * We store all our certificates here
-     */
     Certificate[] private certificates;
 
-    /**
-     * Certificates data are stored here
-     */
     mapping (uint256 => string[]) private certificatesData;
 
     /**
@@ -62,7 +53,7 @@ contract COO is ERC721Full, Ownable {
     }
 
     /**
-     * @dev Updates the information of a certificate. Can only be called by the certificate owner.
+     * @dev Updates the information of a certificate, can only be called by the certificate owner
      * @param certificateId The id of the certificate to update
      * @param name The new name of the asset
      * @param label The new label of the asset
@@ -88,7 +79,7 @@ contract COO is ERC721Full, Ownable {
     }
 
     /**
-     * @dev Gets a certificate and the related information. Can only be called by the certificate owner.
+     * @dev Gets a certificate and the related information, can only be called by the certificate owner
      * @param certificateId The id of a certificate
      * @return The required certificate
      */
@@ -101,7 +92,7 @@ contract COO is ERC721Full, Ownable {
     }
 
     /**
-     * @dev Gets the data related to a certificate. Can only be called by the certificate owner.
+     * @dev Gets the data related to a certificate, can only be called by the certificate owner
      * @param certificateId The id of a certificate
      * @return An array of data hashes
      */
@@ -114,7 +105,7 @@ contract COO is ERC721Full, Ownable {
     }
 
     /**
-     * @dev Updates the data of a certificate. Can only be called by the certificate owner.
+     * @dev Updates the data of a certificate, can only be called by the certificate owner
      * @param data The new data (as an array of hashes)
      */
     function updateCertificateData(
