@@ -221,7 +221,7 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            sales[saleId].expiresAt > now,
+            now > sales[saleId].expiresAt,
             "Sale has expired"
         );
 
@@ -324,7 +324,7 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            auctions[auctionId].expiresAt > now,
+            now > auctions[auctionId].expiresAt,
             "Auction has expired"
         );
 
