@@ -1,3 +1,4 @@
+/* solhint-disable not-rely-on-time */
 pragma solidity 0.4.25;
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
@@ -388,5 +389,21 @@ contract Marketplace is Ownable, Pausable {
         auctions[auctionId].status = Status.Completed;
 
         emit AuctionCompleted(auctionId, msg.sender, auctions[auctionId].currentBid);
+    }
+
+    /**
+     * @dev Gets all the sales
+     * @return An array containing the id of all the sales
+     */
+    function getSales() external view returns (uint256[]) {
+        return sales;
+    }
+
+    /**
+     * @dev Gets all the auctions
+     * @return An array containing the id of all the auctions
+     */
+    function getAuctions() external view returns (uint256[]) {
+        return auctions;
     }
 }
