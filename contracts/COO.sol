@@ -1,3 +1,4 @@
+/* solhint-disable no-empty-blocks */
 pragma solidity 0.4.25;
 pragma experimental ABIEncoderV2;
 
