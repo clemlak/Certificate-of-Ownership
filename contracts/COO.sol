@@ -1,5 +1,6 @@
 /* solhint-disable no-empty-blocks */
-pragma solidity 0.4.25;
+
+pragma solidity 0.5.0;
 pragma experimental ABIEncoderV2;
 
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Full.sol";
@@ -36,7 +37,7 @@ contract COO is ERC721Full, Ownable {
      * @param newCertificate The new certificate to create
      */
     function createCertificate(
-        Certificate newCertificate
+        Certificate memory newCertificate
     ) public {
         uint256 certificateId = certificates.push(
             Certificate({
@@ -64,11 +65,11 @@ contract COO is ERC721Full, Ownable {
      */
     function updateCertificate(
         uint256 certificateId,
-        string name,
-        string label,
+        string memory name,
+        string memory label,
         uint256 price,
-        string factomEntryHash,
-        string anotherEncryptionKey
+        string memory factomEntryHash,
+        string memory anotherEncryptionKey
     ) public {
         require(ownerOf(certificateId) == msg.sender, "Certificates can only be updated by their owners");
 
@@ -87,7 +88,7 @@ contract COO is ERC721Full, Ownable {
     function getCertificate(
         uint256 certificateId
     ) public view returns (
-        Certificate
+        Certificate memory
     ) {
         return certificates[certificateId];
     }
@@ -100,7 +101,7 @@ contract COO is ERC721Full, Ownable {
     function getCertificateData(
         uint256 certificateId
     ) public view returns (
-        string[]
+        string[] memory
     ) {
         return certificatesData[certificateId];
     }
@@ -111,7 +112,7 @@ contract COO is ERC721Full, Ownable {
      */
     function updateCertificateData(
         uint256 certificateId,
-        string[] data
+        string[] memory data
     ) public {
         require(ownerOf(certificateId) == msg.sender, "Certificates can only be updated by their owners");
 
