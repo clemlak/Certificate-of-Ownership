@@ -29,7 +29,7 @@ contract MetaCOO is COO {
         );
         address signer = getSigner(hash, signature);
 
-        require(signer != address(0), "Cannot get the signer");
+        require(signer != address(0), "Cannot get signer");
         require(nonce == nonces[signer], "Meta transaction has already been used");
 
         nonces[signer] += 1;
@@ -54,7 +54,7 @@ contract MetaCOO is COO {
         bytes32 hash = metaTransferHash(to, tokenId, nonce);
         address signer = getSigner(hash, signature);
 
-        require(signer != address(0), "Cannot get the signer");
+        require(signer != address(0), "Cannot get signer");
         require(nonce == nonces[signer], "Meta transaction has already been used");
 
         nonces[signer] += 1;
@@ -62,8 +62,27 @@ contract MetaCOO is COO {
         _transferFrom(signer, to, tokenId);
     }
 
+    function metaSetApprovalForAll(bytes memory signature, address spender, bool approved, uint256 nonce) public {
+        bytes32 hash = metaSetApprovalForAllHash(spender, approved, nonce);
+        address signer = getSigner(hash, signature);
+
+        require(signer != address(0), "Cannot get signer");
+        require(nonce == nonces[signer], "Meta transaction has already been used");
+
+        nonces[signer] += 1;
+
+        require(spender != signer);
+
+        _operatorApprovals[signer][spender] = approved;
+        emit ApprovalForAll(signer, spender, approved);
+    }
+
     function metaTransferHash(address to, uint256 tokenId, uint256 nonce) public view returns (bytes32) {
         return keccak256(abi.encodePacked(address(this), "metaTransfer", to, tokenId, nonce));
+    }
+
+    function metaSetApprovalForAllHash(address spender, bool approved, uint256 nonce) public view returns (bytes32) {
+        return keccak256(abi.encodePacked(address(this), "metaSetApprovalForAll", spender, approved, nonce));
     }
 
     function metaCreateCertificateHash(

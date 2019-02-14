@@ -3,7 +3,7 @@
 pragma solidity 0.5.0;
 pragma experimental ABIEncoderV2;
 
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721Full.sol";
+import "./openzeppelin/ERC721Full.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
