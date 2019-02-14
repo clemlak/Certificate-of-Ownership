@@ -1,10 +1,6 @@
 /* eslint-env mocha */
 /* global artifacts, contract, assert */
 
-/**
- * TODO: Update these tests
- */
-
 const COO = artifacts.require('COO');
 
 let instance;
@@ -21,9 +17,8 @@ const testCertificate = {
   timestamp: currentTime(),
   factomEntryHash: 'FactomEntryHash',
   anotherEncryptionKey: 'AnotherEncryptionKey',
+  data: 'randomDataHash',
 };
-
-const randomData = ['randomData'];
 
 contract('COO', (accounts) => {
   it('Should deploy an instance of the COO contract', () => COO.deployed()
@@ -45,16 +40,6 @@ contract('COO', (accounts) => {
     })
     .catch((error) => {
       assert.equal(error.message.includes('revert'), true, 'A revert error was supposed to happen here');
-    }));
-
-  it('Should update certificate 0 data', () => instance.updateCertificateData(
-    0,
-    randomData,
-  ));
-
-  it('Should check the certificate 0 data', () => instance.getCertificateData(0)
-    .then((data) => {
-      assert.sameMembers(data, randomData, 'Data is wrong');
     }));
 
   it('Should check the owner of certificate 0', () => instance.ownerOf(0)

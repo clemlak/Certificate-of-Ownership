@@ -26,11 +26,10 @@ contract COO is ERC721Full, Ownable {
         uint256 timestamp;
         string factomEntryHash;
         string anotherEncryptionKey;
+        string data;
     }
 
     Certificate[] private certificates;
-
-    mapping (uint256 => string[]) private certificatesData;
 
     /**
      * @dev Creates a new certificate and links it to the sender
@@ -47,7 +46,8 @@ contract COO is ERC721Full, Ownable {
                 price: newCertificate.price,
                 timestamp: newCertificate.timestamp,
                 factomEntryHash: newCertificate.factomEntryHash,
-                anotherEncryptionKey: newCertificate.anotherEncryptionKey
+                anotherEncryptionKey: newCertificate.anotherEncryptionKey,
+                data: newCertificate.data
             })
         ) - 1;
 
@@ -62,6 +62,7 @@ contract COO is ERC721Full, Ownable {
      * @param price The new price of the asset
      * @param factomEntryHash The new factom entry hash of the asset
      * @param anotherEncryptionKey Another new encryption key
+     * @param data The hash linked to the file containing the data
      */
     function updateCertificate(
         uint256 certificateId,
@@ -69,7 +70,8 @@ contract COO is ERC721Full, Ownable {
         string memory label,
         uint256 price,
         string memory factomEntryHash,
-        string memory anotherEncryptionKey
+        string memory anotherEncryptionKey,
+        string memory data
     ) public {
         require(ownerOf(certificateId) == msg.sender, "Certificates can only be updated by their owners");
 
@@ -78,6 +80,7 @@ contract COO is ERC721Full, Ownable {
         certificates[certificateId].price = price;
         certificates[certificateId].factomEntryHash = factomEntryHash;
         certificates[certificateId].anotherEncryptionKey = anotherEncryptionKey;
+        certificates[certificateId].data = data;
     }
 
     /**
@@ -91,31 +94,5 @@ contract COO is ERC721Full, Ownable {
         Certificate memory
     ) {
         return certificates[certificateId];
-    }
-
-    /**
-     * @dev Gets the data related to a certificate, can only be called by the certificate owner
-     * @param certificateId The id of a certificate
-     * @return An array of data hashes
-     */
-    function getCertificateData(
-        uint256 certificateId
-    ) public view returns (
-        string[] memory
-    ) {
-        return certificatesData[certificateId];
-    }
-
-    /**
-     * @dev Updates the data of a certificate, can only be called by the certificate owner
-     * @param data The new data (as an array of hashes)
-     */
-    function updateCertificateData(
-        uint256 certificateId,
-        string[] memory data
-    ) public {
-        require(ownerOf(certificateId) == msg.sender, "Certificates can only be updated by their owners");
-
-        certificatesData[certificateId] = data;
     }
 }
