@@ -115,4 +115,37 @@ contract('MetaCOO', (accounts) => {
     .then((owner) => {
       assert.equal(owner, accounts[1], 'Token 0 owner is wrong');
     }));
+
+  it('Should get the metaSetApprovalForAll hash', () => instance.metaSetApprovalForAllHash(
+    accounts[2],
+    true,
+    nonce + 2,
+  )
+    .then((res) => {
+      const metaHash = web3.utils.soliditySha3(
+        instance.address,
+        'metaSetApprovalForAll',
+        accounts[2],
+        true,
+        nonce + 2,
+      );
+
+      assert.equal(res, metaHash, 'Hash is wrong');
+      hash = res;
+    }));
+
+  it('Should set an approval for all using metaSetApprovalForAll', () => instance.metaSetApprovalForAll(
+    web3.eth.accounts.sign(hash, userPrivateKey).signature,
+    accounts[2],
+    true,
+    nonce + 2,
+  ));
+
+  it('Should check if account 2 is approved for all the tokens of the user', () => instance.isApprovedForAll(
+    userAddress,
+    accounts[2],
+  )
+    .then((res) => {
+      assert.equal(res, true, 'Allowance is wrong');
+    }));
 });
