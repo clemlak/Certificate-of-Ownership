@@ -86,10 +86,50 @@ contract('MetaCOO', (accounts) => {
       assert.equal(balance.toNumber(), 1, 'User balance is wrong');
     }));
 
+  it('Should get the metaUpdateCertificate hash', () => instance.metaUpdateCertificateHash(
+    0,
+    testCertificate.name,
+    testCertificate.label,
+    testCertificate.price,
+    testCertificate.factomEntryHash,
+    testCertificate.anotherEncryptionKey,
+    testCertificate.data,
+    nonce + 1,
+  )
+    .then((res) => {
+      const metaHash = web3.utils.soliditySha3(
+        instance.address,
+        'metaUpdateCertificate',
+        0,
+        testCertificate.name,
+        testCertificate.label,
+        testCertificate.price,
+        testCertificate.factomEntryHash,
+        testCertificate.anotherEncryptionKey,
+        testCertificate.data,
+        nonce + 1,
+      );
+
+      assert.equal(res, metaHash, 'Hash is wrong');
+      hash = res;
+    }));
+
+  it('Should update certificate 0 using metaUpdateCertificate', () => instance.metaUpdateCertificate(
+    web3.eth.accounts.sign(hash, userPrivateKey).signature,
+    0,
+    testCertificate.name,
+    testCertificate.label,
+    testCertificate.price,
+    testCertificate.factomEntryHash,
+    testCertificate.anotherEncryptionKey,
+    testCertificate.data,
+    nonce + 1,
+  ));
+
   it('Should get the metaTransfer hash', () => instance.metaTransferHash(
     accounts[1],
     0,
-    nonce + 1,
+    nonce + 2,
   )
     .then((res) => {
       const metaHash = web3.utils.soliditySha3(
@@ -97,7 +137,7 @@ contract('MetaCOO', (accounts) => {
         'metaTransfer',
         accounts[1],
         0,
-        nonce + 1,
+        nonce + 2,
       );
 
       assert.equal(res, metaHash, 'Hash is wrong');
@@ -108,7 +148,7 @@ contract('MetaCOO', (accounts) => {
     web3.eth.accounts.sign(hash, userPrivateKey).signature,
     accounts[1],
     0,
-    nonce + 1,
+    nonce + 2,
   ));
 
   it('Should check the new owner of token 0', () => instance.ownerOf(0)
@@ -119,7 +159,7 @@ contract('MetaCOO', (accounts) => {
   it('Should get the metaSetApprovalForAll hash', () => instance.metaSetApprovalForAllHash(
     accounts[2],
     true,
-    nonce + 2,
+    nonce + 3,
   )
     .then((res) => {
       const metaHash = web3.utils.soliditySha3(
@@ -127,7 +167,7 @@ contract('MetaCOO', (accounts) => {
         'metaSetApprovalForAll',
         accounts[2],
         true,
-        nonce + 2,
+        nonce + 3,
       );
 
       assert.equal(res, metaHash, 'Hash is wrong');
@@ -138,7 +178,7 @@ contract('MetaCOO', (accounts) => {
     web3.eth.accounts.sign(hash, userPrivateKey).signature,
     accounts[2],
     true,
-    nonce + 2,
+    nonce + 3,
   ));
 
   it('Should check if account 2 is approved for all the tokens of the user', () => instance.isApprovedForAll(

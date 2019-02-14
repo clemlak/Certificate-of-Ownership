@@ -27,10 +27,11 @@ contract MetaCOO is COO {
             newCertificate.data,
             nonce
         );
+
         address signer = getSigner(hash, signature);
 
         require(signer != address(0), "Cannot get signer");
-        require(nonce == nonces[signer], "Meta transaction has already been used");
+        require(nonce == nonces[signer], "Nonce is invalid");
 
         nonces[signer] += 1;
 
@@ -50,12 +51,51 @@ contract MetaCOO is COO {
         _mint(signer, certificateId);
     }
 
+    function metaUpdateCertificate(
+        bytes memory signature,
+        uint256 certificateId,
+        string memory name,
+        string memory label,
+        uint256 price,
+        string memory factomEntryHash,
+        string memory anotherEncryptionKey,
+        string memory data,
+        uint256 nonce
+    ) public {
+        bytes32 hash = metaUpdateCertificateHash(
+            certificateId,
+            name,
+            label,
+            price,
+            factomEntryHash,
+            anotherEncryptionKey,
+            data,
+            nonce
+        );
+
+        address signer = getSigner(hash, signature);
+
+        require(signer != address(0), "Cannot get signer");
+        require(nonce == nonces[signer], "Nonce is invalid");
+
+        nonces[signer] += 1;
+
+        require(ownerOf(certificateId) == signer, "Certificates can only be updated by their owners");
+
+        certificates[certificateId].name = name;
+        certificates[certificateId].label = label;
+        certificates[certificateId].price = price;
+        certificates[certificateId].factomEntryHash = factomEntryHash;
+        certificates[certificateId].anotherEncryptionKey = anotherEncryptionKey;
+        certificates[certificateId].data = data;
+    }
+
     function metaTransfer(bytes memory signature, address to, uint256 tokenId, uint256 nonce) public {
         bytes32 hash = metaTransferHash(to, tokenId, nonce);
         address signer = getSigner(hash, signature);
 
         require(signer != address(0), "Cannot get signer");
-        require(nonce == nonces[signer], "Meta transaction has already been used");
+        require(nonce == nonces[signer], "Nonce is invalid");
 
         nonces[signer] += 1;
 
@@ -67,7 +107,7 @@ contract MetaCOO is COO {
         address signer = getSigner(hash, signature);
 
         require(signer != address(0), "Cannot get signer");
-        require(nonce == nonces[signer], "Meta transaction has already been used");
+        require(nonce == nonces[signer], "Nonce is invalid");
 
         nonces[signer] += 1;
 
@@ -104,6 +144,30 @@ contract MetaCOO is COO {
             label,
             price,
             timestamp,
+            factomEntryHash,
+            anotherEncryptionKey,
+            data,
+            nonce
+        ));
+    }
+
+    function metaUpdateCertificateHash(
+        uint256 certificateId,
+        string memory name,
+        string memory label,
+        uint256 price,
+        string memory factomEntryHash,
+        string memory anotherEncryptionKey,
+        string memory data,
+        uint256 nonce
+    ) public view returns (bytes32) {
+        return keccak256(abi.encodePacked(
+            address(this),
+            "metaUpdateCertificate",
+            certificateId,
+            name,
+            label,
+            price,
             factomEntryHash,
             anotherEncryptionKey,
             data,
