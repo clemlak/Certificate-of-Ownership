@@ -11,6 +11,45 @@ import "./COO.sol";
 contract MetaCOO is COO {
     mapping (address => uint256) public nonces;
 
+    function metaCreateCertificate(
+        bytes memory signature,
+        Certificate memory newCertificate,
+        uint256 nonce
+    ) public {
+        bytes32 hash = metaCreateCertificateHash(
+            newCertificate.assetId,
+            newCertificate.name,
+            newCertificate.label,
+            newCertificate.price,
+            newCertificate.timestamp,
+            newCertificate.factomEntryHash,
+            newCertificate.anotherEncryptionKey,
+            newCertificate.data,
+            nonce
+        );
+        address signer = getSigner(hash, signature);
+
+        require(signer != address(0), "Cannot get the signer");
+        require(nonce == nonces[signer], "Meta transaction has already been used");
+
+        nonces[signer] += 1;
+
+        uint256 certificateId = certificates.push(
+            Certificate({
+                assetId: newCertificate.assetId,
+                name: newCertificate.name,
+                label: newCertificate.label,
+                price: newCertificate.price,
+                timestamp: newCertificate.timestamp,
+                factomEntryHash: newCertificate.factomEntryHash,
+                anotherEncryptionKey: newCertificate.anotherEncryptionKey,
+                data: newCertificate.data
+            })
+        ) - 1;
+
+        _mint(signer, certificateId);
+    }
+
     function metaTransfer(bytes memory signature, address to, uint256 tokenId, uint256 nonce) public {
         bytes32 hash = metaTransferHash(to, tokenId, nonce);
         address signer = getSigner(hash, signature);
@@ -27,13 +66,39 @@ contract MetaCOO is COO {
         return keccak256(abi.encodePacked(address(this), "metaTransfer", to, tokenId, nonce));
     }
 
+    function metaCreateCertificateHash(
+        uint256 assetId,
+        string memory name,
+        string memory label,
+        uint256 price,
+        uint256 timestamp,
+        string memory factomEntryHash,
+        string memory anotherEncryptionKey,
+        string memory data,
+        uint256 nonce
+    ) public view returns (bytes32) {
+        return keccak256(abi.encodePacked(
+            address(this),
+            "metaCreateCertificate",
+            assetId,
+            name,
+            label,
+            price,
+            timestamp,
+            factomEntryHash,
+            anotherEncryptionKey,
+            data,
+            nonce
+        ));
+    }
+
     /**
      * @dev Gets the signer of an hash using the signature
      * @param hash The hash to check
      * @param signature The signature to use
      * @return The address of the signer or 0x0 address is something went wrong
      */
-    function getSigner(bytes32 hash, bytes memory signature) internal pure returns (address) {
+    function getSigner(bytes32 hash, bytes memory signature) public pure returns (address) {
         bytes32 r;
         bytes32 s;
         uint8 v;
