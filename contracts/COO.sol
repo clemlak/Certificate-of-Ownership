@@ -29,7 +29,7 @@ contract COO is ERC721Full, Ownable {
         string data;
     }
 
-    Certificate[] private certificates;
+    Certificate[] internal certificates;
 
     /**
      * @dev Creates a new certificate and links it to the sender
