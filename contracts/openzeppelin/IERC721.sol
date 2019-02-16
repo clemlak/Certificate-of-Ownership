@@ -7,8 +7,8 @@ import "openzeppelin-solidity/contracts/introspection/IERC165.sol";
  * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
  */
 contract IERC721 is IERC165 {
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    event Transfer(address indexed from, address indexed to, uint256 tokenId);
+    event Approval(address indexed owner, address indexed approved, uint256 tokenId);
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
     function balanceOf(address owner) public view returns (uint256 balance);

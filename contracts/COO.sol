@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "./openzeppelin/ERC721Full.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 
 /**
@@ -12,11 +13,16 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
  * @dev This is our main contract
  */
 contract COO is ERC721Full, Ownable {
-    constructor() public ERC721Full(
+    constructor(address newTokenAddress) public ERC721Full(
         "Certificate Of Ownership",
         "COO"
     ) {
+        tokenAddress = newTokenAddress;
     }
+
+    address public tokenAddress;
+    uint256 public constant CONTRACT_CREATION_PRICE = 2 * 10 ** 18;
+    uint256 public constant CONTRACT_UPDATE_PRICE = 1 * 10 ** 18;
 
     struct Certificate {
         uint256 assetId;
@@ -38,6 +44,18 @@ contract COO is ERC721Full, Ownable {
     function createCertificate(
         Certificate memory newCertificate
     ) public {
+        IERC20 token = IERC20(tokenAddress);
+
+        require(
+            token.allowance(msg.sender, address(this)) >= CONTRACT_CREATION_PRICE,
+            "Contract is not allowed to manipulate sender funds"
+        );
+
+        require(
+            token.transferFrom(msg.sender, address(this), CONTRACT_CREATION_PRICE),
+            "Transfer failed"
+        );
+
         uint256 certificateId = certificates.push(
             Certificate({
                 assetId: newCertificate.assetId,
@@ -73,6 +91,18 @@ contract COO is ERC721Full, Ownable {
         string memory anotherEncryptionKey,
         string memory data
     ) public {
+        IERC20 token = IERC20(tokenAddress);
+
+        require(
+            token.allowance(msg.sender, address(this)) >= CONTRACT_UPDATE_PRICE,
+            "Contract is not allowed to manipulate sender funds"
+        );
+
+        require(
+            token.transferFrom(msg.sender, address(this), CONTRACT_UPDATE_PRICE),
+            "Transfer failed"
+        );
+
         require(ownerOf(certificateId) == msg.sender, "Certificates can only be updated by their owners");
 
         certificates[certificateId].name = name;

@@ -1,7 +1,10 @@
+/* solhint-disable no-empty-blocks */
+
 pragma solidity 0.5.0;
 pragma experimental ABIEncoderV2;
 
 import "./COO.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 
 /**
@@ -9,6 +12,9 @@ import "./COO.sol";
  * @dev This contract handles our meta-transactions
  */
 contract MetaCOO is COO {
+    constructor(address newTokenAddress) public COO(newTokenAddress) {
+    }
+
     mapping (address => uint256) public nonces;
 
     function metaCreateCertificate(
@@ -34,6 +40,18 @@ contract MetaCOO is COO {
         require(nonce == nonces[signer], "Nonce is invalid");
 
         nonces[signer] += 1;
+
+        IERC20 token = IERC20(tokenAddress);
+
+        require(
+            token.allowance(signer, address(this)) >= CONTRACT_CREATION_PRICE,
+            "Contract is not allowed to manipulate sender funds"
+        );
+
+        require(
+            token.transferFrom(signer, address(this), CONTRACT_CREATION_PRICE),
+            "Transfer failed"
+        );
 
         uint256 certificateId = certificates.push(
             Certificate({
@@ -79,6 +97,18 @@ contract MetaCOO is COO {
         require(nonce == nonces[signer], "Nonce is invalid");
 
         nonces[signer] += 1;
+
+        IERC20 token = IERC20(tokenAddress);
+
+        require(
+            token.allowance(signer, address(this)) >= CONTRACT_UPDATE_PRICE,
+            "Contract is not allowed to manipulate sender funds"
+        );
+
+        require(
+            token.transferFrom(signer, address(this), CONTRACT_UPDATE_PRICE),
+            "Transfer failed"
+        );
 
         require(ownerOf(certificateId) == signer, "Certificates can only be updated by their owners");
 

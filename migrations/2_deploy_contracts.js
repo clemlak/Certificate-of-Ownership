@@ -7,38 +7,15 @@ const DummyToken = artifacts.require('test/DummyToken');
 const Marketplace = artifacts.require('Marketplace');
 
 function deployContracts(deployer, network) {
-  console.log('Deploying to network:', network);
-
   if (network === 'development') {
-    let cooContractAddress;
-    let tokenContractAddress;
-
-    deployer.deploy(MetaCOO)
-      .then(() => {
-        cooContractAddress = MetaCOO.address;
-
-        return deployer.deploy(DummyToken);
-      })
-      .then(() => {
-        tokenContractAddress = DummyToken.address;
-
-        return deployer.deploy(Marketplace, tokenContractAddress, cooContractAddress);
-      });
+    deployer.deploy(DummyToken)
+      .then(() => deployer.deploy(COO, DummyToken.address))
+      .then(() => deployer.deploy(MetaCOO, DummyToken.address))
+      .then(() => deployer.deploy(Marketplace, DummyToken.address, MetaCOO.address));
   } else if (network === 'ropsten') {
-    let cooContractAddress;
-    let tokenContractAddress;
-
-    deployer.deploy(COO)
-      .then(() => {
-        cooContractAddress = COO.address;
-
-        return deployer.deploy(DummyToken);
-      })
-      .then(() => {
-        tokenContractAddress = DummyToken.address;
-
-        return deployer.deploy(Marketplace, tokenContractAddress, cooContractAddress);
-      });
+    deployer.deploy(DummyToken)
+      .then(() => deployer.deploy(MetaCOO, DummyToken.address))
+      .then(() => deployer.deploy(Marketplace, DummyToken.address, MetaCOO.address));
   }
 }
 
