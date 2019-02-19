@@ -267,7 +267,8 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            cooContract.getApproved(certificateId) == address(this),
+            cooContract.getApproved(certificateId) == address(this)
+            || cooContract.isApprovedForAll(seller, address(this)),
             "Contract is not allowed to manipulate certificate"
         );
 
@@ -337,7 +338,8 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            cooContract.getApproved(sales[saleId].certificateId) == address(this),
+            cooContract.getApproved(sales[saleId].certificateId) == address(this)
+            || cooContract.isApprovedForAll(sales[saleId].seller, address(this)),
             "Contract is not allowed to manipulate certificate"
         );
 
@@ -379,7 +381,8 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            cooContract.getApproved(certificateId) == address(this),
+            cooContract.getApproved(certificateId) == address(this)
+            || cooContract.isApprovedForAll(seller, address(this)),
             "Contract is not allowed to manipulate certificate"
         );
 
@@ -457,7 +460,8 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            cooContract.getApproved(auctions[auctionId].certificateId) == address(this),
+            cooContract.getApproved(auctions[auctionId].certificateId) == address(this)
+            || cooContract.isApprovedForAll(sales[auctionId].seller, address(this)),
             "Contract is not allowed to manipulate certificate"
         );
 
@@ -494,7 +498,8 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            cooContract.getApproved(auctions[auctionId].certificateId) == address(this),
+            cooContract.getApproved(auctions[auctionId].certificateId) == address(this)
+            || cooContract.isApprovedForAll(sales[auctionId].seller, address(this)),
             "Contract is not allowed to manipulate certificate"
         );
 
