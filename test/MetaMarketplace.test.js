@@ -31,11 +31,17 @@ const newSale = {
   expiresAt: getFutureDate(6),
 };
 
-let cooNonce = 0;
-let marketplaceNonce = 0;
+const nonces = {
+  marketplace: [0, 0],
+  coo: [0, 0],
+};
+
 let hash;
-const userPrivateKey = '0x3c233843b00bfca19fefaee3ee0a7c5f645e201306088c286e3d6867a64fa36f';
-const userAddress = '0xa879DE779B33327558a6647414d8591971800965';
+
+const privateKeys = [
+  '0xb19f224e84b479aa309c71dd834a3910cbda288dda3f59ea2bd21412b9f4d708',
+  '0x8139704eb91f4214ff5d60342f039e9d49b174d5a26cd2a2fa9db9ea023b11c1',
+];
 
 contract('Marketplace', (accounts) => {
   it('Should deploy an instance of the DummyToken contract', () => DummyToken.deployed()
@@ -53,29 +59,43 @@ contract('Marketplace', (accounts) => {
       marketplace = instance;
     }));
 
-  it('Should get some free Dummy Tokens from - Account 1', () => token.claimFreeTokens(
+  it('Should get some free Dummy Tokens - Account 1', () => token.claimFreeTokens(
     web3.utils.toWei('100'), {
       from: accounts[1],
     },
   ));
 
-  it('Should get some free Dummy Tokens from - Account 2', () => token.claimFreeTokens(
+  it('Should get some free Dummy Tokens - Account 2', () => token.claimFreeTokens(
     web3.utils.toWei('100'), {
       from: accounts[2],
     },
   ));
 
-  it('Should give COO contract the allowance', () => token.approve(
+  it('Should give COO contract allowance - Account 1', () => token.approve(
     coo.address,
     web3.utils.toWei('100'), {
       from: accounts[1],
     },
   ));
 
+  it('Should give COO contract allowance - Account 2', () => token.approve(
+    coo.address,
+    web3.utils.toWei('100'), {
+      from: accounts[2],
+    },
+  ));
+
+  it('Should give the marketplace allowance - Account 2', () => token.approve(
+    marketplace.address,
+    web3.utils.toWei('100'), {
+      from: accounts[2],
+    },
+  ));
+
   it('Should check the nonce for account 1', () => coo.nonces(accounts[1])
     .then((res) => {
       assert.equal(res.toNumber(), 0, 'Account 1 nonce is wrong');
-      cooNonce = res;
+      nonces.coo[0] = res;
     }));
 
   it('Should get the metaCreateCertificate hash', () => coo.metaCreateCertificateHash(
@@ -87,53 +107,74 @@ contract('Marketplace', (accounts) => {
     testCertificate.factomEntryHash,
     testCertificate.anotherEncryptionKey,
     testCertificate.data,
-    cooNonce,
+    nonces.coo[0],
   )
     .then((res) => {
       hash = res;
     }));
 
   it('Should create a new certificate using metaCreateCertificate', () => coo.metaCreateCertificate(
-    web3.eth.accounts.sign(hash, userPrivateKey).signature,
+    web3.eth.accounts.sign(hash, privateKeys[0]).signature,
     testCertificate,
-    cooNonce,
-  ));
+    nonces.coo[0],
+  )
+    .then(() => {
+      nonces.coo[0] += 1;
+    }));
 
   it('Should get the hash for the metaSetApprovalForAll function', () => coo.metaSetApprovalForAllHash(
     marketplace.address,
     true,
-    cooNonce + 1,
+    nonces.coo[0],
   )
     .then((res) => {
       hash = res;
     }));
 
-  it.skip('Should give the Marketplace allowance', () => coo.metaSetApprovalForAll(
-    web3.eth.accounts.sign(hash, userPrivateKey).signature,
+  it('Should give the Marketplace allowance', () => coo.metaSetApprovalForAll(
+    web3.eth.accounts.sign(hash, privateKeys[0]).signature,
     marketplace.address,
     true,
-    cooNonce + 1,
+    nonces.coo[0],
   ));
-
-  it('Should allow the marketplace contract to manipulate certificate 0', () => coo.approve(marketplace.address, 0, {
-    from: accounts[1],
-  }));
 
   it('Should get the metaCreateSaleHash', () => marketplace.metaCreateSaleHash(
     newSale.certificateId,
     newSale.price,
     newSale.expiresAt,
-    marketplaceNonce,
+    nonces.marketplace[0],
   )
     .then((res) => {
       hash = res;
     }));
 
   it('Should create a new sale using metaCreateSale', () => marketplace.metaCreateSale(
-    web3.eth.accounts.sign(hash, userPrivateKey).signature,
+    web3.eth.accounts.sign(hash, privateKeys[0]).signature,
     newSale.certificateId,
     newSale.price,
     newSale.expiresAt,
-    marketplaceNonce,
+    nonces.marketplace[0],
+  )
+    .then(() => {
+      nonces.marketplace[0] += 1;
+    }));
+
+  it('Should get the metaExecuteSale hash', () => marketplace.metaExecuteSaleHash(
+    0,
+    nonces.marketplace[1],
+  )
+    .then((res) => {
+      hash = res;
+    }));
+
+  it('Should execute buy with metaExecuteSale', () => marketplace.metaExecuteSale(
+    web3.eth.accounts.sign(hash, privateKeys[1]).signature,
+    0,
+    nonces.marketplace[1],
   ));
+
+  it('Should check the owner of certificate 0', () => coo.ownerOf(0)
+    .then((owner) => {
+      assert.equal(owner, accounts[2], 'Owner is wrong');
+    }));
 });
