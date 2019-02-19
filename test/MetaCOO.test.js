@@ -4,12 +4,12 @@
 const MetaCOO = artifacts.require('MetaCOO');
 const DummyToken = artifacts.require('DummyToken');
 
+const {
+  currentTime,
+} = require('./utils');
+
 let coo;
 let token;
-
-function currentTime() {
-  return Math.round(Date.now() / 1000);
-}
 
 const testCertificate = {
   assetId: 0,

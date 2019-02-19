@@ -4,7 +4,6 @@ pragma solidity 0.5.0;
 pragma experimental ABIEncoderV2;
 
 import "./COO.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 
 /**
@@ -12,7 +11,11 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
  * @dev This contract handles our meta-transactions
  */
 contract MetaCOO is COO {
-    constructor(address newTokenAddress) public COO(newTokenAddress) {
+    constructor(
+        address newTokenAddress
+    ) public COO(
+        newTokenAddress
+    ) {
     }
 
     mapping (address => uint256) public nonces;

@@ -15,7 +15,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
  * @dev This contract handles how certificates can be traded
  */
 contract Marketplace is Ownable, Pausable {
-
     /**
      * @dev This contract needs to be linked to a token and an NFT contract
      * @param initialTokenContractAddress The address of the token
@@ -333,7 +332,7 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            now > sales[saleId].expiresAt,
+            now < sales[saleId].expiresAt,
             "Sale has expired"
         );
 
@@ -448,7 +447,7 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            now > auctions[auctionId].expiresAt,
+            now < auctions[auctionId].expiresAt,
             "Auction has expired"
         );
 
