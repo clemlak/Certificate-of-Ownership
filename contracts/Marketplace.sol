@@ -15,13 +15,19 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
  * @dev This contract handles how certificates can be traded
  */
 contract Marketplace is Ownable, Pausable {
-    address public tokenContractAddress;
-    address public cooContractAddress;
 
+    /**
+     * @dev This contract needs to be linked to a token and an NFT contract
+     * @param initialTokenContractAddress The address of the token
+     * @param initialCooContractAddress The address of the NFT contract
+     */
     constructor(address initialTokenContractAddress, address initialCooContractAddress) public {
         tokenContractAddress = initialTokenContractAddress;
         cooContractAddress = initialCooContractAddress;
     }
+
+    address public tokenContractAddress;
+    address public cooContractAddress;
 
     enum Status { Open, Completed, Canceled }
 
@@ -151,16 +157,113 @@ contract Marketplace is Ownable, Pausable {
     }
 
     /**
+     * @dev Gets all the sales
+     * @return An array containing all the sales
+     */
+    function getSales() external view returns (Sale[] memory) {
+        return sales;
+    }
+
+    /**
+     * @dev Gets all the auctions
+     * @return An array containing all the auctions
+     */
+    function getAuctions() external view returns (Auction[] memory) {
+        return auctions;
+    }
+
+    /**
+     * @dev Creates a new sale
+     */
+    function createSale(
+        uint256 certificateId,
+        uint256 price,
+        uint256 expiresAt
+    ) public {
+        _createSale(
+            msg.sender,
+            certificateId,
+            price,
+            expiresAt
+        );
+    }
+
+    function cancelSale(
+        uint256 saleId
+    ) public {
+        _cancelSale(
+            msg.sender,
+            saleId
+        );
+    }
+
+    function executeSale(
+        uint256 saleId
+    ) public {
+        _executeSale(
+            msg.sender,
+            saleId
+        );
+    }
+
+    function createAuction(
+        uint256 certificateId,
+        uint256 startingPrice,
+        uint256 expiresAt
+    ) public {
+        _createAuction(
+            msg.sender,
+            certificateId,
+            startingPrice,
+            expiresAt
+        );
+    }
+
+    function cancelAuction(
+        uint256 auctionId
+    ) public {
+        _cancelAuction(
+            msg.sender,
+            auctionId
+        );
+    }
+
+    function executeAuction(
+        uint256 auctionId,
+        uint256 amount
+    ) public {
+        _executeAuction(
+            msg.sender,
+            auctionId,
+            amount
+        );
+    }
+
+    function completeAuction(
+        uint256 auctionId
+    ) public {
+        _completeAuction(
+            msg.sender,
+            auctionId
+        );
+    }
+
+    /**
      * @dev Creates a new sale
      * @param certificateId The id of the certificate
      * @param price The expected price
      * @param expiresAt The expiry date of the sale (as a timestamp)
      */
-    function createSale(uint256 certificateId, uint256 price, uint256 expiresAt) external whenNotPaused() {
+    function _createSale(
+        address seller,
+        uint256 certificateId,
+        uint256 price,
+        uint256 expiresAt
+    ) internal whenNotPaused() {
         IERC721 cooContract = IERC721(cooContractAddress);
 
         require(
-            cooContract.ownerOf(certificateId) == msg.sender,
+            cooContract.ownerOf(certificateId) == seller,
             "Sender is not the owner of the certificate"
         );
 
@@ -172,7 +275,7 @@ contract Marketplace is Ownable, Pausable {
         uint256 saleId = sales.push(
             Sale({
                 status: Status.Open,
-                seller: msg.sender,
+                seller: seller,
                 buyer: address(0),
                 price: price,
                 certificateId: certificateId,
@@ -180,18 +283,21 @@ contract Marketplace is Ownable, Pausable {
             })
         ) - 1;
 
-        salesToSellers[msg.sender].push(saleId);
+        salesToSellers[seller].push(saleId);
 
-        emit SaleCreated(saleId, msg.sender);
+        emit SaleCreated(saleId, seller);
     }
 
     /**
      * @dev Cancels a sale
      * @param saleId The id of the sale
      */
-    function cancelSale(uint256 saleId) external whenNotPaused() {
+    function _cancelSale(
+        address seller,
+        uint256 saleId
+    ) internal whenNotPaused() {
         require(
-            sales[saleId].seller == msg.sender,
+            sales[saleId].seller == seller,
             "You cannot cancel this sale"
         );
 
@@ -209,12 +315,15 @@ contract Marketplace is Ownable, Pausable {
      * @dev Executes a sale
      * @param saleId The id of the sale
      */
-    function executeSale(uint256 saleId) external whenNotPaused() {
+    function _executeSale(
+        address buyer,
+        uint256 saleId
+    ) internal whenNotPaused() {
         IERC20 tokenContract = IERC20(tokenContractAddress);
         IERC721 cooContract = IERC721(cooContractAddress);
 
         require(
-            sales[saleId].seller != msg.sender,
+            sales[saleId].seller != buyer,
             "You cannot execute your own sale"
         );
 
@@ -234,21 +343,21 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            tokenContract.allowance(msg.sender, address(this)) >= sales[saleId].price,
+            tokenContract.allowance(buyer, address(this)) >= sales[saleId].price,
             "Contract is not allowed to manipulate buyer funds"
         );
 
         require(
-            tokenContract.transferFrom(msg.sender, sales[saleId].seller, sales[saleId].price),
+            tokenContract.transferFrom(buyer, sales[saleId].seller, sales[saleId].price),
             "Contract could not transfer the funds"
         );
 
-        cooContract.transferFrom(sales[saleId].seller, msg.sender, sales[saleId].certificateId);
+        cooContract.transferFrom(sales[saleId].seller, buyer, sales[saleId].certificateId);
 
-        sales[saleId].buyer = msg.sender;
+        sales[saleId].buyer = buyer;
         sales[saleId].status = Status.Completed;
 
-        emit SaleCompleted(saleId, msg.sender);
+        emit SaleCompleted(saleId, buyer);
     }
 
     /**
@@ -257,11 +366,16 @@ contract Marketplace is Ownable, Pausable {
      * @param startingPrice The starting price of the auction
      * @param expiresAt The expiry date of the auction
      */
-    function createAuction(uint256 certificateId, uint256 startingPrice, uint256 expiresAt) external whenNotPaused() {
+    function _createAuction(
+        address seller,
+        uint256 certificateId,
+        uint256 startingPrice,
+        uint256 expiresAt
+    ) internal whenNotPaused() {
         IERC721 cooContract = IERC721(cooContractAddress);
 
         require(
-            cooContract.ownerOf(certificateId) == msg.sender,
+            cooContract.ownerOf(certificateId) == seller,
             "Sender is not the owner of the certificate"
         );
 
@@ -273,7 +387,7 @@ contract Marketplace is Ownable, Pausable {
         uint256 auctionId = auctions.push(
             Auction({
                 status: Status.Open,
-                seller: msg.sender,
+                seller: seller,
                 buyer: address(0),
                 startingPrice: startingPrice,
                 currentBid: 0,
@@ -282,18 +396,21 @@ contract Marketplace is Ownable, Pausable {
             })
         ) - 1;
 
-        auctionsToSellers[msg.sender].push(auctionId);
+        auctionsToSellers[seller].push(auctionId);
 
-        emit AuctionCreated(auctionId, msg.sender);
+        emit AuctionCreated(auctionId, seller);
     }
 
     /**
      * @dev Cancels an auction
      * @param auctionId The id of the auction
      */
-    function cancelAuction(uint256 auctionId) external whenNotPaused() {
+    function _cancelAuction(
+        address seller,
+        uint256 auctionId
+    ) internal whenNotPaused() {
         require(
-            auctions[auctionId].seller == msg.sender,
+            auctions[auctionId].seller == seller,
             "You cannot cancel this auction"
         );
 
@@ -312,12 +429,16 @@ contract Marketplace is Ownable, Pausable {
      * @param auctionId The id of the auction
      * @param amount The amount to bid
      */
-    function executeAuction(uint256 auctionId, uint256 amount) external whenNotPaused() {
+    function _executeAuction(
+        address buyer,
+        uint256 auctionId,
+        uint256 amount
+    ) internal whenNotPaused() {
         IERC20 tokenContract = IERC20(tokenContractAddress);
         IERC721 cooContract = IERC721(cooContractAddress);
 
         require(
-            auctions[auctionId].seller != msg.sender,
+            auctions[auctionId].seller != buyer,
             "You cannot bid on your own auction"
         );
 
@@ -342,21 +463,24 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            tokenContract.allowance(msg.sender, address(this)) >= amount,
+            tokenContract.allowance(buyer, address(this)) >= amount,
             "Contract is not allowed to manipulate buyer funds"
         );
 
         auctions[auctionId].currentBid = amount;
-        auctions[auctionId].buyer = msg.sender;
+        auctions[auctionId].buyer = buyer;
 
-        emit NewBid(auctionId, msg.sender, amount);
+        emit NewBid(auctionId, buyer, amount);
     }
 
     /**
      * @dev Completes an auction (to claim the certificate)
      * @param auctionId The id of the auction
      */
-    function completeAuction(uint256 auctionId) external whenNotPaused() {
+    function _completeAuction(
+        address buyer,
+        uint256 auctionId
+    ) internal whenNotPaused() {
         IERC20 tokenContract = IERC20(tokenContractAddress);
         IERC721 cooContract = IERC721(cooContractAddress);
 
@@ -376,36 +500,20 @@ contract Marketplace is Ownable, Pausable {
         );
 
         require(
-            tokenContract.allowance(msg.sender, address(this)) >= auctions[auctionId].currentBid,
+            tokenContract.allowance(buyer, address(this)) >= auctions[auctionId].currentBid,
             "Contract is not allowed to manipulate buyer funds"
         );
 
         require(
-            tokenContract.transferFrom(msg.sender, auctions[auctionId].seller, auctions[auctionId].currentBid),
+            tokenContract.transferFrom(buyer, auctions[auctionId].seller, auctions[auctionId].currentBid),
             "Contract could not transfer the funds"
         );
 
-        cooContract.transferFrom(auctions[auctionId].seller, msg.sender, auctions[auctionId].certificateId);
+        cooContract.transferFrom(auctions[auctionId].seller, buyer, auctions[auctionId].certificateId);
 
-        auctions[auctionId].buyer = msg.sender;
+        auctions[auctionId].buyer = buyer;
         auctions[auctionId].status = Status.Completed;
 
-        emit AuctionCompleted(auctionId, msg.sender, auctions[auctionId].currentBid);
-    }
-
-    /**
-     * @dev Gets all the sales
-     * @return An array containing all the sales
-     */
-    function getSales() external view returns (Sale[] memory) {
-        return sales;
-    }
-
-    /**
-     * @dev Gets all the auctions
-     * @return An array containing all the auctions
-     */
-    function getAuctions() external view returns (Auction[] memory) {
-        return auctions;
+        emit AuctionCompleted(auctionId, buyer, auctions[auctionId].currentBid);
     }
 }

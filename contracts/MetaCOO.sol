@@ -41,32 +41,7 @@ contract MetaCOO is COO {
 
         nonces[signer] += 1;
 
-        IERC20 token = IERC20(tokenAddress);
-
-        require(
-            token.allowance(signer, address(this)) >= CONTRACT_CREATION_PRICE,
-            "Contract is not allowed to manipulate sender funds"
-        );
-
-        require(
-            token.transferFrom(signer, address(this), CONTRACT_CREATION_PRICE),
-            "Transfer failed"
-        );
-
-        uint256 certificateId = certificates.push(
-            Certificate({
-                assetId: newCertificate.assetId,
-                name: newCertificate.name,
-                label: newCertificate.label,
-                price: newCertificate.price,
-                timestamp: newCertificate.timestamp,
-                factomEntryHash: newCertificate.factomEntryHash,
-                anotherEncryptionKey: newCertificate.anotherEncryptionKey,
-                data: newCertificate.data
-            })
-        ) - 1;
-
-        _mint(signer, certificateId);
+        _createCertificate(signer, newCertificate);
     }
 
     function metaUpdateCertificate(
@@ -98,26 +73,16 @@ contract MetaCOO is COO {
 
         nonces[signer] += 1;
 
-        IERC20 token = IERC20(tokenAddress);
-
-        require(
-            token.allowance(signer, address(this)) >= CONTRACT_UPDATE_PRICE,
-            "Contract is not allowed to manipulate sender funds"
+        _updateCertificate(
+            signer,
+            certificateId,
+            name,
+            label,
+            price,
+            factomEntryHash,
+            anotherEncryptionKey,
+            data
         );
-
-        require(
-            token.transferFrom(signer, address(this), CONTRACT_UPDATE_PRICE),
-            "Transfer failed"
-        );
-
-        require(ownerOf(certificateId) == signer, "Certificates can only be updated by their owners");
-
-        certificates[certificateId].name = name;
-        certificates[certificateId].label = label;
-        certificates[certificateId].price = price;
-        certificates[certificateId].factomEntryHash = factomEntryHash;
-        certificates[certificateId].anotherEncryptionKey = anotherEncryptionKey;
-        certificates[certificateId].data = data;
     }
 
     function metaTransfer(bytes memory signature, address to, uint256 tokenId, uint256 nonce) public {

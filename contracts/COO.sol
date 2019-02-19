@@ -13,6 +13,10 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
  * @dev This is our main contract
  */
 contract COO is ERC721Full, Ownable {
+    /**
+     * @dev This contract must be linked to a token
+     * @param newTokenAddress The address of the linked token
+     */
     constructor(address newTokenAddress) public ERC721Full(
         "Certificate Of Ownership",
         "COO"
@@ -21,6 +25,7 @@ contract COO is ERC721Full, Ownable {
     }
 
     address public tokenAddress;
+
     uint256 public constant CONTRACT_CREATION_PRICE = 2 * 10 ** 18;
     uint256 public constant CONTRACT_UPDATE_PRICE = 1 * 10 ** 18;
 
@@ -37,22 +42,64 @@ contract COO is ERC721Full, Ownable {
 
     Certificate[] internal certificates;
 
-    /**
-     * @dev Creates a new certificate and links it to the sender
-     * @param newCertificate The new certificate to create
-     */
     function createCertificate(
         Certificate memory newCertificate
     ) public {
+        _createCertificate(msg.sender, newCertificate);
+    }
+
+    function updateCertificate(
+        uint256 certificateId,
+        string memory name,
+        string memory label,
+        uint256 price,
+        string memory factomEntryHash,
+        string memory anotherEncryptionKey,
+        string memory data
+    ) public {
+        _updateCertificate(
+            msg.sender,
+            certificateId,
+            name,
+            label,
+            price,
+            factomEntryHash,
+            anotherEncryptionKey,
+            data
+        );
+    }
+
+    /**
+     * @dev Gets a certificate and the related information, can only be called by the certificate owner
+     * @param certificateId The id of a certificate
+     * @return The required certificate
+     */
+    function getCertificate(
+        uint256 certificateId
+    ) public view returns (
+        Certificate memory
+    ) {
+        return certificates[certificateId];
+    }
+
+    /**
+     * @dev Creates a new certificate and links it to the sender
+     * @param newCertificate The new certificate to create
+     * @param certificateOwner The address that will receive the new certificate
+     */
+    function _createCertificate(
+        address certificateOwner,
+        Certificate memory newCertificate
+    ) internal {
         IERC20 token = IERC20(tokenAddress);
 
         require(
-            token.allowance(msg.sender, address(this)) >= CONTRACT_CREATION_PRICE,
+            token.allowance(certificateOwner, address(this)) >= CONTRACT_CREATION_PRICE,
             "Contract is not allowed to manipulate sender funds"
         );
 
         require(
-            token.transferFrom(msg.sender, address(this), CONTRACT_CREATION_PRICE),
+            token.transferFrom(certificateOwner, address(this), CONTRACT_CREATION_PRICE),
             "Transfer failed"
         );
 
@@ -69,11 +116,12 @@ contract COO is ERC721Full, Ownable {
             })
         ) - 1;
 
-        _mint(msg.sender, certificateId);
+        _mint(certificateOwner, certificateId);
     }
 
     /**
      * @dev Updates the information of a certificate, can only be called by the certificate owner
+     * @param certificateOwner The address of the owner of the certificate
      * @param certificateId The id of the certificate to update
      * @param name The new name of the asset
      * @param label The new label of the asset
@@ -82,7 +130,8 @@ contract COO is ERC721Full, Ownable {
      * @param anotherEncryptionKey Another new encryption key
      * @param data The hash linked to the file containing the data
      */
-    function updateCertificate(
+    function _updateCertificate(
+        address certificateOwner,
         uint256 certificateId,
         string memory name,
         string memory label,
@@ -90,20 +139,20 @@ contract COO is ERC721Full, Ownable {
         string memory factomEntryHash,
         string memory anotherEncryptionKey,
         string memory data
-    ) public {
+    ) internal {
         IERC20 token = IERC20(tokenAddress);
 
         require(
-            token.allowance(msg.sender, address(this)) >= CONTRACT_UPDATE_PRICE,
+            token.allowance(certificateOwner, address(this)) >= CONTRACT_UPDATE_PRICE,
             "Contract is not allowed to manipulate sender funds"
         );
 
         require(
-            token.transferFrom(msg.sender, address(this), CONTRACT_UPDATE_PRICE),
+            token.transferFrom(certificateOwner, address(this), CONTRACT_UPDATE_PRICE),
             "Transfer failed"
         );
 
-        require(ownerOf(certificateId) == msg.sender, "Certificates can only be updated by their owners");
+        require(ownerOf(certificateId) == certificateOwner, "Certificates can only be updated by their owners");
 
         certificates[certificateId].name = name;
         certificates[certificateId].label = label;
@@ -111,18 +160,5 @@ contract COO is ERC721Full, Ownable {
         certificates[certificateId].factomEntryHash = factomEntryHash;
         certificates[certificateId].anotherEncryptionKey = anotherEncryptionKey;
         certificates[certificateId].data = data;
-    }
-
-    /**
-     * @dev Gets a certificate and the related information, can only be called by the certificate owner
-     * @param certificateId The id of a certificate
-     * @return The required certificate
-     */
-    function getCertificate(
-        uint256 certificateId
-    ) public view returns (
-        Certificate memory
-    ) {
-        return certificates[certificateId];
     }
 }

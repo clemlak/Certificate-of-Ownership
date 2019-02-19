@@ -24,8 +24,8 @@ const testCertificate = {
 
 let nonce;
 let hash;
-const userPrivateKey = '0x3c5f626bec2108fc8fb1a712dc906b49dc7402e60686a4b775fa07663a2d960f';
-const userAddress = '0x2AfBC93a1c424Da4d77EE5E30cffcBb9e61C3B05';
+const userPrivateKey = '0x812d4e3746e5768e2c2f24379cafe094c72b13927a33023eb29d05cc31951eca';
+const userAddress = '0x58fe7AedD6eF874E4D6ca3Ab87393e47EefA524C';
 
 contract('MetaCOO', (accounts) => {
   it('Should deploy an instance of the DummyToken contract', () => DummyToken.deployed()
