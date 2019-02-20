@@ -26,14 +26,7 @@ contract MetaCOO is COO {
         uint256 nonce
     ) public {
         bytes32 hash = metaCreateCertificateHash(
-            newCertificate.assetId,
-            newCertificate.name,
-            newCertificate.label,
-            newCertificate.price,
-            newCertificate.timestamp,
-            newCertificate.factomEntryHash,
-            newCertificate.anotherEncryptionKey,
-            newCertificate.data,
+            newCertificate,
             nonce
         );
 
@@ -124,27 +117,20 @@ contract MetaCOO is COO {
     }
 
     function metaCreateCertificateHash(
-        uint256 assetId,
-        string memory name,
-        string memory label,
-        uint256 price,
-        uint256 timestamp,
-        string memory factomEntryHash,
-        string memory anotherEncryptionKey,
-        string memory data,
+        Certificate memory newCertificate,
         uint256 nonce
     ) public view returns (bytes32) {
         return keccak256(abi.encodePacked(
             address(this),
             "metaCreateCertificate",
-            assetId,
-            name,
-            label,
-            price,
-            timestamp,
-            factomEntryHash,
-            anotherEncryptionKey,
-            data,
+            newCertificate.assetId,
+            newCertificate.name,
+            newCertificate.label,
+            newCertificate.price,
+            newCertificate.timestamp,
+            newCertificate.factomEntryHash,
+            newCertificate.anotherEncryptionKey,
+            newCertificate.data,
             nonce
         ));
     }

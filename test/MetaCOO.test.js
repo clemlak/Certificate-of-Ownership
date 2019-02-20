@@ -24,8 +24,8 @@ const testCertificate = {
 
 let nonce;
 let hash;
-const userPrivateKey = '0x812d4e3746e5768e2c2f24379cafe094c72b13927a33023eb29d05cc31951eca';
-const userAddress = '0x58fe7AedD6eF874E4D6ca3Ab87393e47EefA524C';
+const userPrivateKey = '0xb19f224e84b479aa309c71dd834a3910cbda288dda3f59ea2bd21412b9f4d708';
+const userAddress = '0x8e2c2da5bf9f1320a92f795c8b4fbd722426896e';
 
 contract('MetaCOO', (accounts) => {
   it('Should deploy an instance of the DummyToken contract', () => DummyToken.deployed()
@@ -58,14 +58,7 @@ contract('MetaCOO', (accounts) => {
     }));
 
   it('Should get the metaCreateCertificate hash', () => coo.metaCreateCertificateHash(
-    testCertificate.assetId,
-    testCertificate.name,
-    testCertificate.label,
-    testCertificate.price,
-    testCertificate.timestamp,
-    testCertificate.factomEntryHash,
-    testCertificate.anotherEncryptionKey,
-    testCertificate.data,
+    testCertificate,
     nonce,
   )
     .then((res) => {
