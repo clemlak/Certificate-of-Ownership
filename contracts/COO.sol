@@ -26,7 +26,7 @@ contract COO is ERC721Full, Ownable {
 
     address public tokenAddress;
 
-    uint256 public constant CONTRACT_CREATION_PRICE = 10 * 10 ** 18;
+    uint256 public constant CONTRACT_CREATION_PRICE = 0 * 10 ** 18;
     uint256 public constant CONTRACT_UPDATE_PRICE = 0 * 10 ** 18;
 
     struct Certificate {
