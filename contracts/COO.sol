@@ -26,8 +26,8 @@ contract COO is ERC721Full, Ownable {
 
     address public tokenAddress;
 
-    uint256 public constant CONTRACT_CREATION_PRICE = 2 * 10 ** 18;
-    uint256 public constant CONTRACT_UPDATE_PRICE = 1 * 10 ** 18;
+    uint256 public constant CONTRACT_CREATION_PRICE = 10 * 10 ** 18;
+    uint256 public constant CONTRACT_UPDATE_PRICE = 0 * 10 ** 18;
 
     struct Certificate {
         uint256 assetId;
@@ -65,6 +65,17 @@ contract COO is ERC721Full, Ownable {
             price,
             factomEntryHash,
             anotherEncryptionKey,
+            data
+        );
+    }
+
+    function updateCertificateData(
+        uint256 certificateId,
+        string memory data
+    ) public {
+        _updateCertificateData(
+            msg.sender,
+            certificateId,
             data
         );
     }
@@ -159,6 +170,16 @@ contract COO is ERC721Full, Ownable {
         certificates[certificateId].price = price;
         certificates[certificateId].factomEntryHash = factomEntryHash;
         certificates[certificateId].anotherEncryptionKey = anotherEncryptionKey;
+        certificates[certificateId].data = data;
+    }
+
+    function _updateCertificateData(
+        address certificateOwner,
+        uint256 certificateId,
+        string memory data
+    ) internal {
+        require(ownerOf(certificateId) == certificateOwner, "Certificates can only be updated by their owners");
+
         certificates[certificateId].data = data;
     }
 }

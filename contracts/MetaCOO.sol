@@ -81,6 +81,32 @@ contract MetaCOO is COO {
         );
     }
 
+    function metaUpdateCertificateData(
+        bytes memory signature,
+        uint256 certificateId,
+        string memory data,
+        uint256 nonce
+    ) public {
+        bytes32 hash = metaUpdateCertificateHash(
+            certificateId,
+            data,
+            nonce
+        );
+
+        address signer = getSigner(hash, signature);
+
+        require(signer != address(0), "Cannot get signer");
+        require(nonce == nonces[signer], "Nonce is invalid");
+
+        nonces[signer] += 1;
+
+        _updateCertificateData(
+            signer,
+            certificateId,
+            data
+        );
+    }
+
     function metaTransfer(bytes memory signature, address to, uint256 tokenId, uint256 nonce) public {
         bytes32 hash = metaTransferHash(to, tokenId, nonce);
         address signer = getSigner(hash, signature);
@@ -154,6 +180,20 @@ contract MetaCOO is COO {
             price,
             factomEntryHash,
             anotherEncryptionKey,
+            data,
+            nonce
+        ));
+    }
+
+    function metaUpdateCertificateHash(
+        uint256 certificateId,
+        string memory data,
+        uint256 nonce
+    ) public view returns (bytes32) {
+        return keccak256(abi.encodePacked(
+            address(this),
+            "metaUpdateCertificateData",
+            certificateId,
             data,
             nonce
         ));
