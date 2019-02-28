@@ -43,9 +43,10 @@ contract COO is ERC721Full, Ownable {
     Certificate[] internal certificates;
 
     function createCertificate(
-        Certificate memory newCertificate
+        Certificate memory newCertificate,
+        string memory uri
     ) public {
-        _createCertificate(msg.sender, newCertificate);
+        _createCertificate(msg.sender, newCertificate, uri);
     }
 
     function updateCertificate(
@@ -100,7 +101,8 @@ contract COO is ERC721Full, Ownable {
      */
     function _createCertificate(
         address certificateOwner,
-        Certificate memory newCertificate
+        Certificate memory newCertificate,
+        string memory uri
     ) internal {
         IERC20 token = IERC20(tokenAddress);
 
@@ -128,6 +130,7 @@ contract COO is ERC721Full, Ownable {
         ) - 1;
 
         _mint(certificateOwner, certificateId);
+        _setTokenURI(certificateId, uri);
     }
 
     /**

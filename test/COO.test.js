@@ -22,6 +22,8 @@ const testCertificate = {
   data: 'randomDataHash',
 };
 
+const tokenURI = 'randomURI';
+
 contract('COO', (accounts) => {
   it('Should deploy an instance of the DummyToken contract', () => DummyToken.deployed()
     .then((instance) => {
@@ -42,7 +44,7 @@ contract('COO', (accounts) => {
     web3.utils.toWei('100'),
   ));
 
-  it('Should create a new certificate', () => coo.createCertificate(testCertificate));
+  it('Should create a new certificate', () => coo.createCertificate(testCertificate, tokenURI));
 
   it('Should get the information of certificate 0', () => coo.getCertificate(0)
     .then((certificate) => {

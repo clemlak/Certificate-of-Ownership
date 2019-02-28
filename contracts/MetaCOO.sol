@@ -23,10 +23,12 @@ contract MetaCOO is COO {
     function metaCreateCertificate(
         bytes memory signature,
         Certificate memory newCertificate,
+        string memory uri,
         uint256 nonce
     ) public {
         bytes32 hash = metaCreateCertificateHash(
             newCertificate,
+            uri,
             nonce
         );
 
@@ -37,7 +39,7 @@ contract MetaCOO is COO {
 
         nonces[signer] += 1;
 
-        _createCertificate(signer, newCertificate);
+        _createCertificate(signer, newCertificate, uri);
     }
 
     function metaUpdateCertificate(
@@ -87,7 +89,7 @@ contract MetaCOO is COO {
         string memory data,
         uint256 nonce
     ) public {
-        bytes32 hash = metaUpdateCertificateHash(
+        bytes32 hash = metaUpdateCertificateDataHash(
             certificateId,
             data,
             nonce
@@ -144,6 +146,7 @@ contract MetaCOO is COO {
 
     function metaCreateCertificateHash(
         Certificate memory newCertificate,
+        string memory uri,
         uint256 nonce
     ) public view returns (bytes32) {
         return keccak256(abi.encodePacked(
@@ -157,6 +160,7 @@ contract MetaCOO is COO {
             newCertificate.factomEntryHash,
             newCertificate.anotherEncryptionKey,
             newCertificate.data,
+            uri,
             nonce
         ));
     }
@@ -185,7 +189,7 @@ contract MetaCOO is COO {
         ));
     }
 
-    function metaUpdateCertificateHash(
+    function metaUpdateCertificateDataHash(
         uint256 certificateId,
         string memory data,
         uint256 nonce

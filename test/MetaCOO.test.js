@@ -22,10 +22,12 @@ const testCertificate = {
   data: 'randomDataHash',
 };
 
+const tokenURI = 'randomURI';
+
 let nonce;
 let hash;
 const userPrivateKey = '0xb19f224e84b479aa309c71dd834a3910cbda288dda3f59ea2bd21412b9f4d708';
-const userAddress = '0x8e2c2da5bf9f1320a92f795c8b4fbd722426896e';
+const userAddress = '0x8e2c2da5BF9F1320A92f795C8b4fBd722426896E';
 
 contract('MetaCOO', (accounts) => {
   it('Should deploy an instance of the DummyToken contract', () => DummyToken.deployed()
@@ -59,6 +61,7 @@ contract('MetaCOO', (accounts) => {
 
   it('Should get the metaCreateCertificate hash', () => coo.metaCreateCertificateHash(
     testCertificate,
+    tokenURI,
     nonce,
   )
     .then((res) => {
@@ -73,6 +76,7 @@ contract('MetaCOO', (accounts) => {
         testCertificate.factomEntryHash,
         testCertificate.anotherEncryptionKey,
         testCertificate.data,
+        tokenURI,
         nonce,
       );
 
@@ -91,6 +95,7 @@ contract('MetaCOO', (accounts) => {
   it('Should create a new certificate using metaCreateCertificate', () => coo.metaCreateCertificate(
     web3.eth.accounts.sign(hash, userPrivateKey).signature,
     testCertificate,
+    tokenURI,
     nonce,
   ));
 
